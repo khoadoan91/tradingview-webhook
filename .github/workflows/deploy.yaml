@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Allow manual triggering of the workflow
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -28,9 +28,6 @@ jobs:
         push: true
         tags: kdoan/tradingview-webhook:latest
 
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
     - name: Set up Kubectl
       uses: azure/setup-kubectl@v3
 

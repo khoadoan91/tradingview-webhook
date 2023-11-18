@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tradingview-webhook
+  namespace: tv
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`tradingview.kdoan.duckdns.org`)
+      kind: Rule
+      services:
+        - name: tradingview-webhook-service
+          port: 8000

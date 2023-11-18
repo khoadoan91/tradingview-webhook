@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tradingview-webhook-app
+  namespace: tv
+  labels:
+    app: tradingview-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tradingview-webhook
+  template:
+    metadata:
+      labels:
+        app: tradingview-webhook
+    spec:
+      containers:
+      - name: tradingview-webhook
+        image: kdoan/tradingview-webhook:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8000

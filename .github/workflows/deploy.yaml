@@ -41,4 +41,5 @@ jobs:
       run: |
         kubectl apply -f templates/deployment.yaml
         kubectl apply -f templates/service.yaml
+        kubectl apply -f templates/certificate.yaml
         kubectl apply -f templates/ingressRoute.yaml

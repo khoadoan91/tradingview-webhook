@@ -8,9 +8,12 @@ metadata:
 spec:
   entryPoints:
     - web
+    - websecure
   routes:
     - match: Host(`tradingview.kdoan.duckdns.org`)
       kind: Rule
       services:
         - name: tradingview-webhook-service
           port: 8000
+  tls:
+    secretName: tradingview-duckdns-tls

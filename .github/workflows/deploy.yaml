@@ -45,6 +45,7 @@ jobs:
           --dry-run=client \
           --from-literal=ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }} \
           --from-literal=ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }} \
+          -n tv \
           -o yaml | \
           kubectl apply -f -
         kubectl apply -f templates/deployment.yaml

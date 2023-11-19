@@ -27,6 +27,7 @@ jobs:
       with:
         push: true
         tags: kdoan/tradingview-webhook:latest
+        build-args: ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }},ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }}
 
     - name: Set up Kubectl
       uses: azure/setup-kubectl@v3

@@ -40,6 +40,13 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
+        kubectl create secret generic python-config \
+          --save-config \
+          --dry-run=client \
+          --from-literal=ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }} \
+          --from-literal=ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }} \
+          -o yaml | \
+          kubectl apply -f -
         kubectl apply -f templates/deployment.yaml
         kubectl apply -f templates/service.yaml
         kubectl apply -f templates/certificate.yaml

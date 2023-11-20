@@ -7,6 +7,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 import logging
+from blacklist import BLACK_LIST
 
 from models.tv_body import TradingViewRequestBody
 
@@ -30,11 +31,13 @@ def get_status():
 @app.post("/alert-hook")
 async def post_alert_hook(body: TradingViewRequestBody, strategy: str | None = None):
   logger.info(f"Alert received. Body: {body}")
-
+  if body.ticker in BLACK_LIST:
+    return "blacklist"
+  
   # preparing order data
   market_order_data = MarketOrderRequest(
                       symbol=body.ticker,
-                      qty=float(body.positionSize),
+                      qty=abs(float(body.positionSize)),
                       side=OrderSide.BUY if body.orderAction == "buy" else OrderSide.SELL,
                       time_in_force=TimeInForce.DAY
                   )

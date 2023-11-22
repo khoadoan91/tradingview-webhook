@@ -51,9 +51,8 @@ jobs:
         namespace: 'tv'
         secret-type: 'generic'
         secret-name: python-config
-        string-data: |
-          ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }}
-          ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }}
+        data: '{ "ALPACA_API_KEY": ${{ secrets.ALPACA_API_KEY }}, "ALPACA_SECRET_KEY": ${{ secrets.ALPACA_SECRET_KEY }} }'
+
     - name: Deploy to the Kubernetes cluster
       uses: Azure/k8s-deploy@v4
       with:

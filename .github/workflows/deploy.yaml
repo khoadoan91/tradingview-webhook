@@ -7,12 +7,9 @@ on:
   workflow_dispatch:  # Allow manual triggering of the workflow
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -26,9 +23,15 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         push: true
-        tags: kdoan/tradingview-webhook:latest
-        build-args: ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }},ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }}
-
+        tags: |
+          kdoan/tradingview-webhook:latest
+          kdoan/tradingview-webhook:${{ github.run_number }}-${{ github.run_attempt }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+  
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
     - name: Set up Kubectl
       uses: azure/setup-kubectl@v3
 
@@ -38,17 +41,36 @@ jobs:
         method: kubeconfig
         kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl create secret generic python-config \
-          --save-config \
-          --dry-run=client \
-          --from-literal=ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }} \
-          --from-literal=ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }} \
-          -n tv \
-          -o yaml | \
-          kubectl apply -f -
-        kubectl apply -f templates/deployment.yaml
-        kubectl apply -f templates/service.yaml
-        kubectl apply -f templates/certificate.yaml
-        kubectl apply -f templates/ingressRoute.yaml
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to the Kubernetes cluster
+      uses: azure/k8s-create-secret@v2
+      with:
+        namespace: 'tv'
+        secret-type: 'generic'
+        secret-name: python-config
+        data: '{ ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}, ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }} }'
+
+    - name: Deploy to the Kubernetes cluster
+      uses: Azure/k8s-deploy@v4
+      with:
+        namespace: 'tv'
+        manifests: |
+          templates
+        images: 'kdoan/tradingview-webhook:${{ github.run_number }}-${{ github.run_attempt }}'
+
+    # - name: Deploy to Kubernetes
+    #   run: |
+    #     kubectl create secret generic python-config \
+    #       --save-config \
+    #       --dry-run=client \
+    #       --from-literal=ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }} \
+    #       --from-literal=ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }} \
+    #       -n tv \
+    #       -o yaml | \
+    #       kubectl apply -f -
+    #     kubectl apply -f templates/deployment.yaml
+    #     kubectl apply -f templates/service.yaml
+    #     kubectl apply -f templates/certificate.yaml
+    #     kubectl apply -f templates/ingressRoute.yaml

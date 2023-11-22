@@ -18,7 +18,7 @@ spec:
       containers:
       - name: tradingview-webhook
         image: kdoan/tradingview-webhook:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 8000
         env:

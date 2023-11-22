@@ -31,6 +31,7 @@ jobs:
   
   deploy:
     runs-on: ubuntu-latest
+    needs: [ build ]
     steps:
     - name: Set up Kubectl
       uses: azure/setup-kubectl@v3

@@ -42,9 +42,6 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Deploy a secret
-      uses: azure/k8s-create-secret@v2
       
     - name: Deploy to the Kubernetes cluster
       uses: Azure/k8s-deploy@v4

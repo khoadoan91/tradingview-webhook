@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
 ib_insync
-alpaca-py
 python-dotenv
+pydantic-settings
+pydantic

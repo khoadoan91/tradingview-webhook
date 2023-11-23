@@ -26,8 +26,8 @@ jobs:
         tags: |
           kdoan/tradingview-webhook:latest
           kdoan/tradingview-webhook:${{ github.run_number }}-${{ github.run_attempt }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=registry,ref=user/app:buildcache
+        cache-to: type=registry,ref=user/app:buildcache,mode=max
   
   deploy:
     runs-on: ubuntu-latest
@@ -47,12 +47,7 @@ jobs:
     
     - name: Deploy a secret
       uses: azure/k8s-create-secret@v2
-      with:
-        namespace: 'tv'
-        secret-type: 'generic'
-        secret-name: python-config
-        string-data: '{ "ALPACA_API_KEY": "${{ secrets.ALPACA_API_KEY }}", "ALPACA_SECRET_KEY": "${{ secrets.ALPACA_SECRET_KEY }}" }'
-
+      
     - name: Deploy to the Kubernetes cluster
       uses: Azure/k8s-deploy@v4
       with:

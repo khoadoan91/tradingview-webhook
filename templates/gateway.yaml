@@ -62,5 +62,53 @@ spec:
       targetPort: api
       protocol: TCP
       name: api
+    - port: 6080
+      targetPort: novnc
+      protocol: TCP
+      name: novnc
   selector:
     app.kubernetes.io/component: "gateway"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ibkr-gateway-basicauth
+  namespace: tv
+spec:
+  basicAuth:
+    secret: gateway-secret
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ibkr-duckdns-certificate
+  namespace: tv
+spec:
+  dnsNames:
+  - 'ibkr.kdoan.duckdns.org'
+  issuerRef:
+    name: cert-manager-webhook-duckdns-production
+    kind: ClusterIssuer
+  secretName: ibkr-duckdns-tls
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ibkr-gateway
+  namespace: tv
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`ibkr.kdoan.duckdns.org`)
+      middlewares:
+        - name: ibkr-gateway-basicauth
+          namespace: traefik
+      services:
+        - name: ibkr-gateway
+          port: 6080
+  tls:
+    secretName: ibkr-duckdns-tls

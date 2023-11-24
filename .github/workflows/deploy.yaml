@@ -40,6 +40,14 @@ jobs:
         method: kubeconfig
         kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
+    - name: Deploy a secret
+      uses: azure/k8s-create-secret@v2
+      with:
+        namespace: 'tv'
+        secret-type: 'generic'
+        secret-name: gateway-secret
+        string-data: '{ "users": "${{ secrets.GATEWAY_BASICAUTH }}" }'
+
     - name: Checkout code
       uses: actions/checkout@v4
       

@@ -45,14 +45,14 @@ async def lifespan(app: FastAPI):
   """
   Connect to gateway
   """
-  ibkr.connect(
-      host = settings.ib_gateway_host,
-      port = settings.ib_gateway_port,
-      clientId = 1,
-      timeout = 15,
-      readonly = False)
-  yield
-  ibkr.disconnect()
+  # ibkr.connect(
+  #     host = settings.ib_gateway_host,
+  #     port = settings.ib_gateway_port,
+  #     clientId = 1,
+  #     timeout = 15,
+  #     readonly = False)
+  # yield
+  # ibkr.disconnect()
 
 app = FastAPI(lifespan=lifespan)
 

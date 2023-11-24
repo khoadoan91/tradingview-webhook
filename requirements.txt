@@ -4,3 +4,4 @@ ib_insync
 python-dotenv
 pydantic-settings
 pydantic
+pandas

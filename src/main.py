@@ -113,8 +113,8 @@ def post_alert_hook(body: TradingViewRequestBody):
     while not trade.orderStatus.status == 'Filled':
       ibkr.waitOnUpdate()
     logger.info(f"Order filled: {trade}")
-    limit1Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit1, stopPrice=stop)
-    limit2Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit2, stopPrice=stop)
+    limit1Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit1, stopPrice=stop, tif="GTC")
+    limit2Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit2, stopPrice=stop, tif="GTC")
     limit1Trade = ibkr.placeOrder(contract, limit1Order)
     limit2Trade = ibkr.placeOrder(contract, limit2Order)
     logger.info(f"Place 2 exit orders:\n{limit1Trade}\n{limit2Trade}")

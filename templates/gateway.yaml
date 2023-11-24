@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: ibkr-gateway
-          image: ghcr.io/extrange/ibkr:latest
+          image: ghcr.io/extrange/ibkr:stable
           imagePullPolicy: IfNotPresent
           ports:
             - name: api

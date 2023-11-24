@@ -10,12 +10,12 @@ import re
 from fastapi import FastAPI
 from ib_insync import IB, MarketOrder, Stock, StopLimitOrder, util
 import nest_asyncio
-from src.blacklist import BLACK_LIST
 
 from models.tv_body import TradingViewRequestBody
+from src.blacklist import BLACK_LIST
 
 PnLEntryMatcher = re.compile('stop: (?P<stop>[0-9.]+) limit1: (?P<limit1>[0-9.]+) limit2: (?P<limit2>[0-9.]+)')
-ExitMatcher = re.compile('')
+# ExitMatcher = re.compile('')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +25,11 @@ class Settings(BaseSettings):
     """
     Read server settings
     """
-    ib_gateway_host: str = "127.0.0.1"
-    ib_gateway_port: int = 4002
+    # ibkr.kdoan.duckdns.org
+    ib_gateway_host: str = "ibkr.tv.svc.cluster.local"
+
+    # TWS uses 7496 (live) and 7497 (paper), while IB gateway uses 4001 (live) and 4002 (paper).
+    ib_gateway_port: int = 8888
     timezone: str = "US/Eastern"
     timeformat: str = "%Y-%m-%dT%H%M"
 
@@ -47,7 +50,7 @@ async def lifespan(app: FastAPI):
       port = settings.ib_gateway_port,
       clientId = 1,
       timeout = 15,
-      readonly = True)
+      readonly = False)
   yield
   ibkr.disconnect()
 
@@ -89,7 +92,7 @@ def portfolio():
   return results
 
 @app.post("/alert-hook")
-async def post_alert_hook(body: TradingViewRequestBody):
+def post_alert_hook(body: TradingViewRequestBody):
   """
   Listen to tradingview alert to place orders.
   """

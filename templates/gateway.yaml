@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/component: "gateway"
 spec:
   replicas: 1
+  revisionHistoryLimit: 2 # how many old replicasets to keep around.
   selector:
     matchLabels:
       app.kubernetes.io/component: "gateway"
@@ -17,7 +18,7 @@ spec:
     spec:
       containers:
         - name: ibkr-gateway
-          image: ghcr.io/extrange/ibkr:stable
+          image: ghcr.io/extrange/ibkr:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: api
@@ -43,7 +44,11 @@ spec:
             - name: IBC_TradingMode
               value: paper
             - name: GATEWAY_OR_TWS
-              value: tws
+              value: gateway
+            - name: IBC_ReadOnlyApi
+              value: "False"
+            - name: IPX_FIX
+              value: "yes"
 ---
 apiVersion: v1
 kind: Service

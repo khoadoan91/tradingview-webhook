@@ -47,7 +47,9 @@ spec:
               value: gateway
             - name: IBC_ReadOnlyApi
               value: "False"
-            - name: IPX_FIX
+            - name: IBC_TrustedTwsApiClientIPs
+              value: "98.247.178.240,192.168.1.120"
+            - name: IBC_FIX
               value: "yes"
 ---
 apiVersion: v1

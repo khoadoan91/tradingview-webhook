@@ -1,7 +1,7 @@
 """
 FastAPI server for gateway
 """
-
+import pandas
 from contextlib import asynccontextmanager
 import logging
 from dotenv import load_dotenv

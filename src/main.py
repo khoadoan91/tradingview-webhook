@@ -1,10 +1,10 @@
-# pylint: disable=redefined-outer-name, unused-argument
 """
 FastAPI server for gateway
 """
 
 from contextlib import asynccontextmanager
 import logging
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 import re
 from fastapi import FastAPI
@@ -14,6 +14,7 @@ import nest_asyncio
 from models.tv_body import TradingViewRequestBody
 from src.blacklist import BLACK_LIST
 
+load_dotenv()
 PnLEntryMatcher = re.compile('stop: (?P<stop>[0-9.]+) limit1: (?P<limit1>[0-9.]+) limit2: (?P<limit2>[0-9.]+)')
 # ExitMatcher = re.compile('')
 
@@ -25,10 +26,7 @@ class Settings(BaseSettings):
     """
     Read server settings
     """
-    # ibkr.kdoan.duckdns.org
-    ib_gateway_host: str = "ibkr.tv.svc.cluster.local"
-
-    # TWS uses 7496 (live) and 7497 (paper), while IB gateway uses 4001 (live) and 4002 (paper).
+    ib_gateway_host: str = "ibkr-gateway.tv.svc.cluster.local"
     ib_gateway_port: int = 8888
     timezone: str = "US/Eastern"
     timeformat: str = "%Y-%m-%dT%H%M"
@@ -45,18 +43,16 @@ async def lifespan(app: FastAPI):
   """
   Connect to gateway
   """
-  # ibkr.connect(
-  #     host = settings.ib_gateway_host,
-  #     port = settings.ib_gateway_port,
-  #     clientId = 1,
-  #     timeout = 15,
-  #     readonly = False)
-  # yield
-  # ibkr.disconnect()
+  ibkr.connect(
+      host = settings.ib_gateway_host,
+      port = settings.ib_gateway_port,
+      clientId = 1,
+      timeout = 15,
+      readonly = False)
+  yield
+  ibkr.disconnect()
 
-app = FastAPI(
-  # lifespan=lifespan
-  )
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def read_root():

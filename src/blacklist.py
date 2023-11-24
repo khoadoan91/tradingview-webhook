@@ -1,1 +1,1 @@
-BLACK_LIST = ['BTCUSD', 'ES1!']
+BLACK_LIST = ['BTCUSD']

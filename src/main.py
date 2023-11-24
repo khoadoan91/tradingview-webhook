@@ -54,7 +54,9 @@ async def lifespan(app: FastAPI):
   # yield
   # ibkr.disconnect()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+  # lifespan=lifespan
+  )
 
 @app.get("/")
 def read_root():

@@ -21,7 +21,9 @@ spec:
         image: kdoan/tradingview-webhook:latest
         imagePullPolicy: IfNotPresent
         ports:
-          - containerPort: 8000
+          - name: api
+            containerPort: 8000
+            protocol: TCP
         envFrom:
             - secretRef:
                 name: python-config

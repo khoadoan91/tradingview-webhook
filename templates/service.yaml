@@ -7,6 +7,7 @@ spec:
   selector:
     app: tradingview-webhook
   ports:
-    - protocol: TCP
+    - name: api
+      protocol: TCP
       port: 8000
-      targetPort: 8000
+      targetPort: api

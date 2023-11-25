@@ -1,7 +1,8 @@
 import argparse
 
-from ib_insync import IB
+from ib_insync import IB, Contract, Future
 
+# TWS uses 7496 (live) and 7497 (paper), while IB gateway uses 4001 (live) and 4002 (paper).
 parser = argparse.ArgumentParser(description="Just an example",
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--host", default="127.0.0.1")
@@ -20,5 +21,14 @@ ibkr.connect(
     readonly = True)
 
 results = ibkr.client.connectionStats()
-print(results)
+# print(f"connectionStats: {results}")
+# print(f"Positions: {ibkr.positions()}")
+
+es_future=Future(symbol="ES", currency="USD")
+contract_details = ibkr.reqContractDetails(es_future)
+qualify_contracts = ibkr.qualifyContracts(contract_details[0].contract)
+print("qualify_contracts", qualify_contracts)
+marketDetails=ibkr.reqMktData(contract_details[0].contract)
+print("marketDetails", marketDetails)
+
 ibkr.disconnect()

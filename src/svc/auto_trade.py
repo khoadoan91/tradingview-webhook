@@ -1,7 +1,6 @@
-
 import logging
 import re
-from ib_insync import IB, MarketOrder, Stock, StopLimitOrder
+from ib_insync import IB, Future, MarketOrder, Stock, StopLimitOrder
 
 from models.tv_body import TradingViewRequestBody
 
@@ -11,7 +10,7 @@ symbolMapping = {
 }
 logger = logging.getLogger(__name__)
 
-def place_order(body: TradingViewRequestBody, ibkr: IB) => void:
+def place_order(body: TradingViewRequestBody, ibkr: IB) -> None:
   # Extract info
   contract = tv_to_ib(body.ticker, ibkr)
   orderSize = float(body.orderContracts)

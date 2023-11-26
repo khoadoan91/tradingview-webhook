@@ -13,6 +13,7 @@ import nest_asyncio
 
 from models.tv_body import TradingViewRequestBody
 from src.blacklist import BLACK_LIST
+from src.svc.auto_trade import place_order
 
 load_dotenv()
 PnLEntryMatcher = re.compile('stop: (?P<stop>[0-9.]+) limit1: (?P<limit1>[0-9.]+) limit2: (?P<limit2>[0-9.]+)')
@@ -98,39 +99,7 @@ def post_alert_hook(body: TradingViewRequestBody):
   if body.ticker in BLACK_LIST:
     return "blacklist"
   
-  # Extract info
-  contract = Stock(body.ticker, 'SMART', 'USD')
-  orderSize = float(body.orderContracts)
-  match = PnLEntryMatcher.match(body.orderComment)
-  if body.orderComment.startswith('ENTER'):
-    # Get stoploss and takeprofit
-    stop = float(match.group('stop'))
-    limit1 = float(match.group('limit1'))
-    limit2 = float(match.group('limit2'))
-
-    # Place order
-    trade = ibkr.placeOrder(contract, MarketOrder(action=str.upper(body.orderAction), totalQuantity=orderSize))
-    while not trade.orderStatus.status == 'Filled':
-      ibkr.waitOnUpdate()
-    logger.info(f"Order filled: {trade}")
-    limit1Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit1, stopPrice=stop, tif="GTC")
-    limit2Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit2, stopPrice=stop, tif="GTC")
-    limit1Trade = ibkr.placeOrder(contract, limit1Order)
-    limit2Trade = ibkr.placeOrder(contract, limit2Order)
-    logger.info(f"Place 2 exit orders:\n{limit1Trade}\n{limit2Trade}")
-    return "OK"
-  
-  if body.orderComment.startswith('EXIT 1'):
-    open_orders = ibkr.openOrders()
-    filtered_orders = [order for order in open_orders if order.contract.symbol == body.ticker]
-    logger.info(f"Found open orders for ticker {body.ticker}: {filtered_orders}")
-    if len(filtered_orders) == 0:
-      logger.info("Position has lossed")
-    else:
-      filtered_orders[0].auxPrice = next(pos for pos in ibkr.positions() if pos.contract.symbol == body.ticker).avgCost
-      ibkr.placeOrder(filtered_orders[0])
-      logger.info(f"Update stoploss of the limit2 order to entry price {filtered_orders[0].auxPrice}")
-  
+  place_order(body, ibkr)
   return "Ok"
 
 

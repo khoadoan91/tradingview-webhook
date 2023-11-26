@@ -11,9 +11,9 @@ symbolMapping = {
 }
 logger = logging.getLogger(__name__)
 
-def auto_trade(body: TradingViewRequestBody, ibkr: IB):
+def place_order(body: TradingViewRequestBody, ibkr: IB) => void:
   # Extract info
-  contract = Stock(body.ticker, 'SMART', 'USD')
+  contract = tv_to_ib(body.ticker, ibkr)
   orderSize = float(body.orderContracts)
   match = PnLEntryMatcher.match(body.orderComment)
   if body.orderComment.startswith('ENTER'):
@@ -32,7 +32,7 @@ def auto_trade(body: TradingViewRequestBody, ibkr: IB):
     limit1Trade = ibkr.placeOrder(contract, limit1Order)
     limit2Trade = ibkr.placeOrder(contract, limit2Order)
     logger.info(f"Place 2 exit orders:\n{limit1Trade}\n{limit2Trade}")
-    return "OK"
+    return
   
   if body.orderComment.startswith('EXIT 1'):
     open_orders = ibkr.openOrders()
@@ -45,7 +45,14 @@ def auto_trade(body: TradingViewRequestBody, ibkr: IB):
       ibkr.placeOrder(filtered_orders[0])
       logger.info(f"Update stoploss of the limit2 order to entry price {filtered_orders[0].auxPrice}")
 
-def tv_to_ib(symbol: str):
+def tv_to_ib(symbol: str, ibkr: IB):
   if symbol in symbolMapping:
-    return symbolMapping[symbol]
-  return [symbol, "STK"]
+    if symbolMapping[symbol][1] == "FUT":
+
+      contract = Future(symbolMapping[symbol], currency="USD")
+    else:
+      contract = Stock(symbolMapping[symbol], "SMART", currency="USD")
+  else:
+    contract = Stock(symbol, "SMART", currency="USD")
+  return ibkr.reqContractDetails(contract)[0].contract
+  

@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     """
     Read server settings
     """
-    ib_gateway_host: str = "ibkr-gateway.tv.svc.cluster.local"
+    ib_gateway_host: str = "192.168.1.123"
     ib_gateway_port: int = 8888
     timezone: str = "US/Eastern"
     timeformat: str = "%Y-%m-%dT%H%M"

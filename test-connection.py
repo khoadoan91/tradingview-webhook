@@ -6,7 +6,7 @@ from ib_insync import IB, Contract, Future
 parser = argparse.ArgumentParser(description="Just an example",
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--host", default="127.0.0.1")
-parser.add_argument("-p", "--port", default=4002)
+parser.add_argument("-p", "--port", default=8888)
 args = parser.parse_args()
 config = vars(args)
 
@@ -25,7 +25,7 @@ results = ibkr.client.connectionStats()
 # print(f"Positions: {ibkr.positions()}")
 
 es_future=Future(symbol="ES", currency="USD")
-contract_details = _ibkr.reqContractDetails(es_future)
+contract_details = ibkr.reqContractDetails(es_future)
 print("contractDetails", contract_details)
 qualify_contracts = ibkr.qualifyContracts(contract_details[0].contract)
 print("qualify_contracts", qualify_contracts)

@@ -1,6 +1,7 @@
 """
 FastAPI server for gateway
 """
+import random
 import pandas
 from contextlib import asynccontextmanager
 import logging
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     """
     Read server settings
     """
-    ib_gateway_host: str = "192.168.1.123"
+    ib_gateway_host: str = "ibkr-gateway.tv"
     ib_gateway_port: int = 8888
     timezone: str = "US/Eastern"
     timeformat: str = "%Y-%m-%dT%H%M"
@@ -47,7 +48,7 @@ async def lifespan(app: FastAPI):
   ibkr.connect(
       host = settings.ib_gateway_host,
       port = settings.ib_gateway_port,
-      clientId = 1,
+      clientId = random.randint(),
       timeout = 15,
       readonly = False)
   yield

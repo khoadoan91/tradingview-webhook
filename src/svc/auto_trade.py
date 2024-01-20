@@ -1,6 +1,7 @@
 import logging
+import math
 import re
-from ib_insync import IB, Future, MarketOrder, Stock, StopLimitOrder
+from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder
 
 from models.tv_body import TradingViewRequestBody
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 def place_order(body: TradingViewRequestBody, ibkr: IB) -> None:
   # Extract info
   contract = tv_to_ib(body.ticker, ibkr)
-  orderSize = float(body.orderContracts)
+  orderSize = abs(float(body.orderContracts)) * calculate_order_size(ibkr, contract)
   match = PnLEntryMatcher.match(body.orderComment)
   if body.orderComment.startswith('ENTER'):
     # Get stoploss and takeprofit
@@ -44,10 +45,9 @@ def place_order(body: TradingViewRequestBody, ibkr: IB) -> None:
       ibkr.placeOrder(filtered_orders[0])
       logger.info(f"Update stoploss of the limit2 order to entry price {filtered_orders[0].auxPrice}")
 
-def tv_to_ib(symbol: str, ibkr: IB):
+def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
   if symbol in symbolMapping:
     if symbolMapping[symbol][1] == "FUT":
-
       contract = Future(symbolMapping[symbol], currency="USD")
     else:
       contract = Stock(symbolMapping[symbol], "SMART", currency="USD")
@@ -55,3 +55,9 @@ def tv_to_ib(symbol: str, ibkr: IB):
     contract = Stock(symbol, "SMART", currency="USD")
   return ibkr.reqContractDetails(contract)[0].contract
   
+def calculate_order_size(ibkr: IB, symbol: Contract, allowFundPercent: float = 0.1) -> float:
+  availFund = next(account for account in ibkr.accountSummary() if account.tag == 'AvailableFunds').value
+  # ibkr.reqHistoricalData(symbol)
+  ticker = ibkr.reqMktData(symbol, snapshot=True)
+  curPrice = ticker.marketPrice()
+  return math.floor(availFund * allowFundPercent / curPrice)

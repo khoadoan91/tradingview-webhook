@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
   ibkr.connect(
       host = settings.ib_gateway_host,
       port = settings.ib_gateway_port,
-      clientId = random.randint(),
+      clientId = random.randint(1, 100),
       timeout = 15,
       readonly = False)
   yield

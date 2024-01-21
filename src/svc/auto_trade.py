@@ -57,7 +57,6 @@ def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
   
 def calculate_order_size(ibkr: IB, symbol: Contract, allowFundPercent: float = 0.1) -> float:
   availFund = next(account for account in ibkr.accountSummary() if account.tag == 'AvailableFunds').value
-  # ibkr.reqHistoricalData(symbol)
   ticker = ibkr.reqMktData(symbol, snapshot=True)
   curPrice = ticker.marketPrice()
   return math.floor(availFund * allowFundPercent / curPrice)

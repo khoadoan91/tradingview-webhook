@@ -1,5 +1,5 @@
 import argparse
-
+import random
 from ib_insync import IB, MarketOrder, Stock
 
 # TWS uses 7496 (live) and 7497 (paper), while IB gateway uses 4001 (live) and 4002 (paper).
@@ -16,8 +16,7 @@ ibkr = IB()
 ibkr.connect(
     host=host,
     port=port,
-    clientId = 2,
-    timeout = 120,
+    clientId = random.randint(1, 1000),
     readonly = True)
 
 # def onPendingTickers(tickers):

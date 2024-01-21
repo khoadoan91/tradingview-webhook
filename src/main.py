@@ -54,9 +54,7 @@ async def lifespan(app: FastAPI):
   yield
   ibkr.disconnect()
 
-app = FastAPI(
-  # lifespan=lifespan
-  )
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def read_root():
@@ -75,23 +73,19 @@ def stats():
 
 @app.get("/positions")
 def positions():
-  """
-  Get positions
-  """
-  results = util.df(ibkr.positions())
-  if results:
-    return results.transpose()
-  return results
+    """
+    Get positions
+    """
+    results = util.df(ibkr.positions()).transpose()
+    return results
 
 @app.get("/portfolio")
 def portfolio():
-  """
-  Get portfolio
-  """
-  results = util.df(ibkr.portfolio())
-  if results:
-    return results.transpose()
-  return results
+    """
+    Get portfolio
+    """
+    results = util.df(ibkr.portfolio()).transpose()
+    return results
 
 @app.post("/alert-hook")
 def post_alert_hook(body: TradingViewRequestBody):

@@ -5,3 +5,5 @@ python-dotenv
 pydantic-settings
 pydantic
 pandas
+hvac
+sqlmodel

@@ -3,7 +3,7 @@ import math
 import re
 from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder
 
-from models.tv_body import TradingViewRequestBody
+from ..models.all import TradingViewRequestBody
 
 PnLEntryMatcher = re.compile('stop: (?P<stop>[0-9.]+) limit1: (?P<limit1>[0-9.]+) limit2: (?P<limit2>[0-9.]+)')
 symbolMapping = {

@@ -25,5 +25,5 @@ spec:
             containerPort: 8000
             protocol: TCP
         envFrom:
-            - secretRef:
-                name: python-config
+          - secretRef:
+              name: vault-config

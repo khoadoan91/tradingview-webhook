@@ -40,6 +40,18 @@ jobs:
         method: kubeconfig
         kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
+    - name: Deploy secret to Kubernetes
+      run: |
+        kubectl create secret generic vault-config \
+          --save-config \
+          --dry-run=client \
+          --from-literal=VAULT_ROLE_ID=${{ secrets.VAULT_ROLE_ID }} \
+          --from-literal=VAULT_SECRET_ID=${{ secrets.VAULT_SECRET_ID }} \
+          --from-literal=VAULT_URL=${{ secrets.VAULT_URL }} \
+          -n tv \
+          -o yaml | \
+          kubectl apply -f -
+
     - name: Checkout code
       uses: actions/checkout@v4
       
@@ -50,18 +62,3 @@ jobs:
         manifests: |
           templates
         images: 'kdoan/tradingview-webhook:${{ github.run_number }}'
-
-    # - name: Deploy to Kubernetes
-    #   run: |
-    #     kubectl create secret generic python-config \
-    #       --save-config \
-    #       --dry-run=client \
-    #       --from-literal=ALPACA_API_KEY=${{ secrets.ALPACA_API_KEY }} \
-    #       --from-literal=ALPACA_SECRET_KEY=${{ secrets.ALPACA_SECRET_KEY }} \
-    #       -n tv \
-    #       -o yaml | \
-    #       kubectl apply -f -
-    #     kubectl apply -f templates/deployment.yaml
-    #     kubectl apply -f templates/service.yaml
-    #     kubectl apply -f templates/certificate.yaml
-    #     kubectl apply -f templates/ingressRoute.yaml

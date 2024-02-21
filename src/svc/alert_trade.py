@@ -1,6 +1,7 @@
 from datetime import datetime
 import re
 
+from ..util import getSettingCurrentTime
 from ..models.all import TradingViewAlert, TradingViewRequestBody
 
 stopMatcher = re.compile(r'[Ss]top[:]?\s*(?P<stop>[0-9.,]+)')
@@ -24,7 +25,7 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
     trend = "ERROR" if limit2 is None or limit1 is None else "UP" if limit2 > limit1 else "DOWN"
     
     return TradingViewAlert(
-      received_at=datetime.now(),
+      received_at=getSettingCurrentTime(),
       ticker=request.ticker,
       action="ENTER",
       trend=trend,
@@ -36,7 +37,7 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
     )
   
   return TradingViewAlert(
-    received_at=datetime.now(),
+    received_at=getSettingCurrentTime(),
     ticker=request.ticker,
     action="EXIT",
     quantity=request.positionSize,

@@ -3,6 +3,8 @@ import asyncio
 import random
 from ib_insync import IB, Contract, MarketOrder, Stock, Ticker, util
 
+from src.util import timing
+
 # TWS uses 7496 (live) and 7497 (paper), while IB gateway uses 4001 (live) and 4002 (paper).
 parser = argparse.ArgumentParser(description="Just an example",
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -28,6 +30,7 @@ ibkr.connect(
 
 # ibkr.pendingTickersEvent -= onPendingTickers
 
+@timing
 async def reqMktDataSnapshot(contract: Contract):
   ticketUpdateEvent = asyncio.Event()
   

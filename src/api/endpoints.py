@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from ib_insync import util
 
+from ..util import getSettingCurrentTime
+
 from ..svc.alert_trade import request_map_to_alert
 
 from ..db.engine import engine
@@ -31,7 +33,7 @@ def post_alert_hook(
   try:
     alert = request_map_to_alert(body)
   except Exception as e:
-    alert = TradingViewAlert(received_at=datetime.now(), ticker=body.ticker, action="error", error=str(e), content=body.model_dump_json())
+    alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=body.ticker, action="error", error=str(e), content=body.model_dump_json())
     traceback.print_exc()
   session.add(alert)
   session.commit()

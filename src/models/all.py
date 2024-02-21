@@ -8,8 +8,8 @@ class TradingViewAlert(SQLModel, table=True):
   
   received_at: datetime = Field(default=datetime.now(), primary_key=True)
   ticker: str
+  signal: Optional[str] = None
   action: str
-  trend: Optional[str] = None
   quantity: Optional[int] = None
   limit1: Optional[float] = None
   limit2: Optional[float] = None

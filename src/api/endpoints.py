@@ -34,7 +34,7 @@ def post_alert_hook(
   try:
     alert = request_map_to_alert(body)
   except Exception as e:
-    alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=body.ticker, action="error", error=str(e), content=body.model_dump_json())
+    alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=body.ticker, signal="error", action=body.orderAction, error=str(e), content=body.model_dump_json())
     traceback.print_exc()
   session.add(alert)
   session.commit()

@@ -5,8 +5,8 @@ from ..util import getSettingCurrentTime
 from ..models.all import TradingViewAlert, TradingViewRequestBody
 
 stopMatcher = re.compile(r'[Ss]top[:]?\s*(?P<stop>[0-9.,]+)')
-limit1Matcher = re.compile(r'[Ll]imit\s*1[:]?\s*(?P<limit1>[0-9.,]+)')
-limit2Matcher = re.compile(r'[Ll]imit\s*2[:]?\s*(?P<limit1>[0-9.,]+)')
+limit1Matcher = re.compile(r'[Ll]imit\s*[1]?[:]?\s*(?P<limit1>[0-9.,]+)')
+limit2Matcher = re.compile(r'[Ll]imit\s*[2]?[:]?\s*(?P<limit1>[0-9.,]+)')
 
 def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
   now = getSettingCurrentTime()
@@ -23,13 +23,13 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
     limit2Match = limit2Matcher.search(request.orderComment)
     limit2 = float(limit2Match.group(1).replace(",", "")) if limit2Match is not None else None
     
-    trend = "ERROR" if limit2 is None or limit1 is None else "UP" if limit2 > limit1 else "DOWN"
+    action = request.orderAction
     
     return TradingViewAlert(
       received_at=now,
       ticker=request.ticker,
-      action="ENTER",
-      trend=trend,
+      signal="ENTER",
+      action=action,
       quantity=request.positionSize,
       limit1=limit1,
       limit2=limit2,
@@ -40,7 +40,8 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
   return TradingViewAlert(
     received_at=now,
     ticker=request.ticker,
-    action="EXIT",
+    signal="EXIT",
+    action=request.orderAction,
     quantity=request.positionSize,
     content=request.model_dump_json()
   )

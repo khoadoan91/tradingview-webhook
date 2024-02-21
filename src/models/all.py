@@ -6,7 +6,8 @@ from pydantic import BaseModel
 class TradingViewAlert(SQLModel, table=True):
   __tablename__ = "tradingview_alert"
   
-  received_at: datetime = Field(default=datetime.now(), primary_key=True)
+  id: Optional[int] = Field(default=None, primary_key=True)
+  received_at: datetime = Field(default=datetime.now())
   ticker: str
   signal: Optional[str] = None
   action: str

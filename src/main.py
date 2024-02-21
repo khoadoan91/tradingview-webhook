@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
       clientId = random.randint(1, 100),
       timeout = 15,
       readonly = False)
+  
+  # Request Delayed Market Data (FREE - No subscription required)
+  ibkr.reqMarketDataType(3)
   yield
   ibkr.disconnect()
 

@@ -1,47 +1,44 @@
+import asyncio
+from dataclasses import asdict
 import logging
 import math
-import re
-from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder
+from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder, Ticker, util
 
-from ..models.all import TradingViewRequestBody
+from ..models.all import TradingViewAlert
 
-PnLEntryMatcher = re.compile('stop: (?P<stop>[0-9.]+) limit1: (?P<limit1>[0-9.]+) limit2: (?P<limit2>[0-9.]+)')
 symbolMapping = {
   "ES1!": ["ES", "FUT"]
 }
 logger = logging.getLogger(__name__)
 
-def place_order(body: TradingViewRequestBody, ibkr: IB) -> None:
+async def place_order(alert: TradingViewAlert, ibkr: IB) -> None:
   # Extract info
-  contract = tv_to_ib(body.ticker, ibkr)
-  orderSize = abs(float(body.orderContracts)) * calculate_order_size(ibkr, contract)
-  match = PnLEntryMatcher.match(body.orderComment)
-  if body.orderComment.startswith('ENTER'):
-    # Get stoploss and takeprofit
-    stop = float(match.group('stop'))
-    limit1 = float(match.group('limit1'))
-    limit2 = float(match.group('limit2'))
-
+  contract = tv_to_ib(alert.ticker, ibkr)
+  orderSize = await calculate_order_size(ibkr, contract)
+  orderSize = abs(float(alert.orderContracts)) * orderSize
+  if alert.signal.casefold() == "ENTER".casefold():
     # Place order
-    trade = ibkr.placeOrder(contract, MarketOrder(action=str.upper(body.orderAction), totalQuantity=orderSize))
+    trade = ibkr.placeOrder(contract, MarketOrder(action=str.upper(alert.action), totalQuantity=orderSize))
+    
+    # TODO: Wrap placeOrder function to async/await
     while not trade.orderStatus.status == 'Filled':
       ibkr.waitOnUpdate()
     logger.info(f"Order filled: {trade}")
-    limit1Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit1, stopPrice=stop, tif="GTC")
-    limit2Order = StopLimitOrder(action="SELL" if body.orderAction == "buy" else "BUY", totalQuantity=(orderSize / 2), lmtPrice=limit2, stopPrice=stop, tif="GTC")
+    limit1Order = StopLimitOrder(action="SELL" if alert.action == "buy" else "BUY", totalQuantity=math.ceil(orderSize / 2), lmtPrice=alert.limit1, stopPrice=alert.stop, tif="GTC")
+    limit2Order = StopLimitOrder(action="SELL" if alert.action == "buy" else "BUY", totalQuantity=math.floor(orderSize / 2), lmtPrice=alert.limit2, stopPrice=alert.stop, tif="GTC")
     limit1Trade = ibkr.placeOrder(contract, limit1Order)
     limit2Trade = ibkr.placeOrder(contract, limit2Order)
     logger.info(f"Place 2 exit orders:\n{limit1Trade}\n{limit2Trade}")
     return
   
-  if body.orderComment.startswith('EXIT 1'):
+  if alert.orderComment.startswith('EXIT 1'):
     open_orders = ibkr.openOrders()
-    filtered_orders = [order for order in open_orders if order.contract.symbol == body.ticker]
-    logger.info(f"Found open orders for ticker {body.ticker}: {filtered_orders}")
+    filtered_orders = [order for order in open_orders if order.contract.symbol == alert.ticker]
+    logger.info(f"Found open orders for ticker {alert.ticker}: {filtered_orders}")
     if len(filtered_orders) == 0:
       logger.info("Position has lossed")
     else:
-      filtered_orders[0].auxPrice = next(pos for pos in ibkr.positions() if pos.contract.symbol == body.ticker).avgCost
+      filtered_orders[0].auxPrice = next(pos for pos in ibkr.positions() if pos.contract.symbol == alert.ticker).avgCost
       ibkr.placeOrder(filtered_orders[0])
       logger.info(f"Update stoploss of the limit2 order to entry price {filtered_orders[0].auxPrice}")
 
@@ -55,8 +52,21 @@ def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
     contract = Stock(symbol, "SMART", currency="USD")
   return ibkr.reqContractDetails(contract)[0].contract
   
-def calculate_order_size(ibkr: IB, symbol: Contract, allowFundPercent: float = 0.1) -> float:
+async def calculate_order_size(ibkr: IB, symbol: Contract, allowFundPercent: float = 0.1) -> float:
   availFund = next(account for account in ibkr.accountSummary() if account.tag == 'AvailableFunds').value
-  ticker = ibkr.reqMktData(symbol, snapshot=True)
-  curPrice = ticker.marketPrice()
+  ticker = await reqMktOrderSnapshot(ibkr, symbol, waitForField="ask")
+  curPrice = ticker.ask
   return math.floor(availFund * allowFundPercent / curPrice)
+
+async def reqMktOrderSnapshot(ibkr: IB, contract: Contract, waitForField: str = "ask", timeoutInSec: float = 10) -> Ticker:
+  tickerEvent = asyncio.Event()
+  
+  def onTickerUpdate(t: Ticker) -> None:
+    if not util.isNan(asdict(t)[waitForField]):
+      tickerEvent.set()
+  
+  ticker = ibkr.reqMktData(contract=contract, snapshot=True)
+  ticker.updateEvent += onTickerUpdate
+  
+  await asyncio.wait_for(tickerEvent.wait(), timeout=timeoutInSec)
+  return ticker

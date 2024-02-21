@@ -27,6 +27,11 @@ loggers:
     handlers:
       - access
     propagate: no
+  ib_insync.wrapper:
+    level: WARNING
+    handlers:
+      - access
+    propagate: no
 root:
   level: INFO
   handlers:

@@ -21,11 +21,13 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
     limit2Match = limit2Matcher.search(request.orderComment)
     limit2 = float(limit2Match.group(1)) if limit2Match is not None else None
     
+    trend = "ERROR" if limit2 is None or limit1 is None else "UP" if limit2 > limit1 else "DOWN"
+    
     return TradingViewAlert(
       received_at=datetime.now(),
       ticker=request.ticker,
       action="ENTER",
-      trend="UP" if limit2 > limit1 else "DOWN",
+      trend=trend,
       quantity=request.positionSize,
       limit1=limit1,
       limit2=limit2,

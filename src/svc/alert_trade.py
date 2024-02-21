@@ -30,7 +30,7 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
       ticker=request.ticker,
       signal="ENTER",
       action=action,
-      quantity=request.positionSize,
+      quantity=request.orderContracts,
       limit1=limit1,
       limit2=limit2,
       stop=stop,
@@ -42,6 +42,6 @@ def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
     ticker=request.ticker,
     signal="EXIT",
     action=request.orderAction,
-    quantity=request.positionSize,
+    quantity=request.orderContracts,
     content=request.model_dump_json()
   )

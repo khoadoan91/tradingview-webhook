@@ -9,6 +9,7 @@ import re
 from fastapi import FastAPI
 
 from .dependencies import settings, ibkr
+from .api import endpoints
 import nest_asyncio
 
 # from ..blacklist import BLACK_LIST
@@ -41,7 +42,9 @@ async def lifespan(app: FastAPI):
   ibkr.disconnect()
 
 app = FastAPI(title="tradingview-webhook"
-              #, lifespan=lifespan
+              , lifespan=lifespan
               )
+
+app.include_router(endpoints.router)
 
 

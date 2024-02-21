@@ -1,9 +1,12 @@
 from datetime import datetime
 import logging
+import traceback
 from typing import Annotated, Generator
 
 from fastapi import APIRouter, Depends
-from requests import Session
+from sqlmodel import Session
+
+from ..svc.alert_trade import request_map_to_alert
 
 from ..db.engine import engine
 from ..models.all import TradingViewAlert, TradingViewRequestBody
@@ -24,12 +27,11 @@ def post_alert_hook(
   Listen to tradingview alert to place orders.
   """
   logger.info(f"Alert received. Body: {body}")
-  now = datetime.now()
-  alert = TradingViewAlert(
-    received_at=now,
-    ticker=body.ticker,
-    action=body.orderAction,
-    quantity=body.positionSize)
+  try:
+    alert = request_map_to_alert(body)
+  except Exception as e:
+    traceback.print_exc()
+    alert = TradingViewAlert(received_at=datetime.now(), ticker=body.ticker, action="error", error=str(e), content=body.model_dump_json())
   session.add(alert)
   session.commit()
   # if body.ticker in BLACK_LIST:

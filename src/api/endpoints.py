@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from ib_insync import util
 
-from ..util import getSettingCurrentTime
+from ..util import getSettingCurrentTime, timing
 
 from ..svc.alert_trade import request_map_to_alert
 
@@ -24,6 +24,7 @@ def get_db() -> Generator:
 SessionDep = Annotated[Session, Depends(get_db)]
 
 @router.post("/alert-hook")
+@timing
 def post_alert_hook(
   *, session: SessionDep, body: TradingViewRequestBody):
   """

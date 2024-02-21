@@ -1,9 +1,13 @@
 import argparse
 import asyncio
+from dataclasses import asdict
+from functools import wraps
 import random
+from time import time
 from ib_insync import IB, Contract, MarketOrder, Stock, Ticker, util
 
-from src.util import timing
+import nest_asyncio
+nest_asyncio.apply()
 
 # TWS uses 7496 (live) and 7497 (paper), while IB gateway uses 4001 (live) and 4002 (paper).
 parser = argparse.ArgumentParser(description="Just an example",
@@ -19,9 +23,20 @@ ibkr = IB()
 ibkr.connect(
     host=host,
     port=port,
-    clientId = random.randint(1, 1000),
+    clientId = 1000,
     readonly = True)
 
+def timingAsync(f):
+    @wraps(f)
+    async def wrap(*args, **kw):
+        ts = time()
+        result = await f(*args, **kw)
+        te = time()
+        print('func:%r args:[%r, %r] took: %2.4f sec' % \
+          (f.__name__, args, kw, te-ts))
+        return result
+    return wrap
+  
 # def onPendingTickers(tickers: set[Ticker]):
 #     d = {i: (c.contract.symbol, c.close) for (i, c) in enumerate(tickers)}
 #     ibkr.loopUntil(any(util.isNan(val) for val in d.values()), len(tickers), 10)
@@ -30,21 +45,19 @@ ibkr.connect(
 
 # ibkr.pendingTickersEvent -= onPendingTickers
 
-@timing
-async def reqMktDataSnapshot(contract: Contract):
+@timingAsync
+async def reqMktDataSnapshot(contract: Contract, waitForField: str = "ask"):
   ticketUpdateEvent = asyncio.Event()
   
   def onTickerUpdate(t: Ticker) -> None:
-    ibkr.loopUntil(not util.isNan(t.close), timeout=10)
-    if not util.isNan(t.close):
+    print(f"Ticker updated: {t}")
+    if not util.isNan(asdict(t)[waitForField]):
       ticketUpdateEvent.set()
-    else:
-      raise TimeoutError(f"Timeout while waiting for {t.contract.symbol}")
   
   ticker = ibkr.reqMktData(contract=contract, snapshot=True)
   ticker.updateEvent += onTickerUpdate
   
-  await ticketUpdateEvent.wait()
+  await asyncio.wait_for(ticketUpdateEvent.wait(), timeout=10)
   return ticker
 
 async def test_place_order(placeOrder: bool = False):
@@ -57,7 +70,7 @@ async def test_place_order(placeOrder: bool = False):
   qualify_contracts = ibkr.qualifyContracts(contract_details[0].contract)
   print("===================")
   print("qualify_contracts", qualify_contracts)
-  ibkr.reqMarketDataType(3)
+  ibkr.reqMarketDataType(3) # Request Delayed Market Data (FREE - No subscription required)
   marketDetails = await reqMktDataSnapshot(contract_details[0].contract)
   # marketDetails=ibkr.reqMktData(contract_details[0].contract, snapshot=True)
   # myMarketDetails=ibkr.reqMktData(contract, snapshot=True)
@@ -78,16 +91,19 @@ async def test_place_order(placeOrder: bool = False):
     print("===================")
     print("Order Status:", trade)
 
-asyncio.run(test_place_order())
-results = ibkr.client.connectionStats()
-print(f"connectionStats: {results}")
+try:
+  asyncio.run(test_place_order())
+  results = ibkr.client.connectionStats()
+  print(f"connectionStats: {results}")
 
-print(ibkr.portfolio())
-print("==========================================================")
-print(f"Positions: {ibkr.positions()}")
+  print(ibkr.portfolio())
+  print("==========================================================")
+  print(f"Positions: {ibkr.positions()}")
 
-account = next(account for account in ibkr.accountSummary() if account.tag == 'AvailableFunds')
-print("==========================================================")
-print(f"Available Funds: {account.value}")
+  account = next(account for account in ibkr.accountSummary() if account.tag == 'AvailableFunds')
+  print("==========================================================")
+  print(f"Available Funds: {account.value}")
 
-ibkr.disconnect()
+  ibkr.sleep(10)
+finally:
+  ibkr.disconnect()

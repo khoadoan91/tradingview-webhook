@@ -5,6 +5,7 @@ from typing import Annotated, Generator
 
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
+from ib_insync import util
 
 from ..svc.alert_trade import request_map_to_alert
 
@@ -30,8 +31,8 @@ def post_alert_hook(
   try:
     alert = request_map_to_alert(body)
   except Exception as e:
-    traceback.print_exc()
     alert = TradingViewAlert(received_at=datetime.now(), ticker=body.ticker, action="error", error=str(e), content=body.model_dump_json())
+    traceback.print_exc()
   session.add(alert)
   session.commit()
   # if body.ticker in BLACK_LIST:
@@ -54,11 +55,13 @@ def positions():
   """
   Get positions
   """
-  return 'ok'
+  results = util.df(ibkr.positions()).transpose()
+  return results
 
 @router.get("/portfolio")
 def portfolio():
   """
   Get portfolio
   """
-  return 'ok'
+  results = util.df(ibkr.portfolio()).transpose()
+  return results

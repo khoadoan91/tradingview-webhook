@@ -25,8 +25,6 @@ logger = logging.getLogger(__name__)
 
 nest_asyncio.apply()
 
-logging.info(settings)
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
   """

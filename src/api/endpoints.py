@@ -57,7 +57,8 @@ def positions():
   """
   Get positions
   """
-  results = util.df(ibkr.positions()).transpose()
+  positions = ibkr.positions()
+  results = util.df(positions).transpose() if len(positions) > 0 else None
   return results
 
 @router.get("/portfolio")
@@ -65,5 +66,6 @@ def portfolio():
   """
   Get portfolio
   """
-  results = util.df(ibkr.portfolio()).transpose()
+  portfolio = ibkr.portfolio()
+  results = util.df(portfolio).transpose() if len(portfolio) > 0 else None
   return results

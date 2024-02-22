@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 from dataclasses import asdict
+from functools import wraps
 from timeit import default_timer as timer
 from ib_insync import IB, Contract, MarketOrder, Stock, Ticker, util
 
@@ -62,14 +63,14 @@ async def test_place_order(placeOrder: bool = False):
   contract=Stock(symbol="MSFT", exchange="SMART", currency="USD")
   print("===================")
   print("my_contracts", contract)
-  contract_details = ibkr.reqContractDetails(contract)
+  contract_details = ibkr.reqContractDetails(contract)[0].contract
   # print("===================")
   # print("contractDetails", contract_details)
-  qualify_contracts = ibkr.qualifyContracts(contract_details[0].contract)
-  print("===================")
-  print("qualify_contracts", qualify_contracts)
+  # qualify_contracts = ibkr.qualifyContracts(contract_details)
+  # print("===================")
+  # print("qualify_contracts", qualify_contracts)
   ibkr.reqMarketDataType(3) # Request Delayed Market Data (FREE - No subscription required)
-  marketDetails = await reqMktDataSnapshot(contract_details[0].contract)
+  marketDetails = await reqMktDataSnapshot(contract_details)
   # marketDetails=ibkr.reqMktData(contract_details[0].contract, snapshot=True)
   # myMarketDetails=ibkr.reqMktData(contract, snapshot=True)
   
@@ -88,6 +89,7 @@ async def test_place_order(placeOrder: bool = False):
       ibkr.waitOnUpdate()
     print("===================")
     print("Order Status:", trade)
+    
 
 try:
   asyncio.run(test_place_order())

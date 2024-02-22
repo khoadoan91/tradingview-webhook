@@ -32,15 +32,16 @@ async def place_order(alert: TradingViewAlert, ibkr: IB) -> None:
     return
   
   if alert.orderComment.startswith('EXIT 1'):
-    open_orders = ibkr.openOrders()
-    filtered_orders = [order for order in open_orders if order.contract.symbol == alert.ticker]
-    logger.info(f"Found open orders for ticker {alert.ticker}: {filtered_orders}")
-    if len(filtered_orders) == 0:
+    trades = ibkr.trades()
+    filtered_trades = [trade for trade in trades if trade.contract.symbol == alert.ticker]
+    logger.info(f"Found open trades for ticker {alert.ticker}: {filtered_trades}")
+    if len(filtered_trades) == 0:
       logger.warn("No positions")
     else:
-      filtered_orders[0].auxPrice = next(pos for pos in ibkr.positions() if pos.contract.symbol == alert.ticker).avgCost
-      ibkr.placeOrder(filtered_orders[0])
-      logger.info(f"Update stoploss of the limit2 order to entry price {filtered_orders[0].auxPrice}")
+      order = filtered_trades[0].order
+      order.auxPrice = next(pos for pos in ibkr.positions() if pos.contract.symbol == alert.ticker).avgCost
+      ibkr.placeOrder(contract, order)
+      logger.info(f"Update stoploss of the limit2 order to entry price {order.auxPrice}")
 
 def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
   if symbol in symbolMapping:

@@ -1,9 +1,7 @@
 import argparse
 import asyncio
 from dataclasses import asdict
-from functools import wraps
-import random
-from time import time
+from timeit import default_timer as timer
 from ib_insync import IB, Contract, MarketOrder, Stock, Ticker, util
 
 import nest_asyncio
@@ -29,9 +27,9 @@ ibkr.connect(
 def timingAsync(f):
     @wraps(f)
     async def wrap(*args, **kw):
-        ts = time()
+        ts = timer()
         result = await f(*args, **kw)
-        te = time()
+        te = timer()
         print('func:%r args:[%r, %r] took: %2.4f sec' % \
           (f.__name__, args, kw, te-ts))
         return result

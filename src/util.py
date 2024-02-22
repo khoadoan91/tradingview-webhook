@@ -1,8 +1,7 @@
 from datetime import datetime
 from functools import wraps
 import logging
-from time import time
-
+from timeit import default_timer as timer
 from zoneinfo import ZoneInfo
 from .dependencies import settings
 
@@ -11,22 +10,20 @@ logger = logging.getLogger(__name__)
 def timing(f):
   @wraps(f)
   def wrap(*args, **kw):
-    ts = time()
+    ts = timer()
     result = f(*args, **kw)
-    te = time()
-    logger.info('func:%r took: %2.4f sec' % \
-      (f.__name__, args, kw, te-ts))
+    te = timer()
+    logger.info(f'func:{f.__name__} took: {te-ts} sec')
     return result
   return wrap
 
 def timingAsync(f):
   @wraps(f)
   async def wrap(*args, **kw):
-    ts = time()
+    ts = timer()
     result = await f(*args, **kw)
-    te = time()
-    logger.info('func:%r took: %2.4f sec' % \
-      (f.__name__, args, kw, te-ts))
+    te = timer()
+    logger.info(f'func:{f.__name__} took: {te-ts} sec')
     return result
   return wrap
 

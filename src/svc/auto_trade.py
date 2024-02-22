@@ -54,9 +54,13 @@ def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
   return ibkr.reqContractDetails(contract)[0].contract
   
 async def calculate_order_size(ibkr: IB, symbol: Contract, allowFundPercent: float = 0.1) -> float:
-  availFund = next(account for account in ibkr.accountSummary() if account.tag == 'AvailableFunds').value
-  ticker = await reqMktOrderSnapshot(ibkr, symbol, waitForField="ask")
-  curPrice = ticker.ask
+  accountSummary = ibkr.accountSummaryAsync()
+  [accountSummary, marketPrice] = await asyncio.gather(
+      ibkr.accountSummaryAsync(),
+      reqMktOrderSnapshot(ibkr, symbol, waitForField="ask")
+  )
+  availFund = next(account for account in accountSummary if account.tag == 'AvailableFunds').value
+  curPrice = marketPrice.ask
   return math.floor(availFund * allowFundPercent / curPrice)
 
 async def reqMktOrderSnapshot(ibkr: IB, contract: Contract, waitForField: str = "ask", timeoutInSec: float = 10) -> Ticker:

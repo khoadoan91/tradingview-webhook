@@ -5,8 +5,8 @@ from ..util import getSettingCurrentTime
 from ..models.all import TradingViewAlert, TradingViewRequestBody
 
 stopMatcher = re.compile(r'[Ss]top[:]?\s*(?P<stop>[0-9.,]+)')
-limit1Matcher = re.compile(r'[Ll]imit\s*[1]?[:]?\s*(?P<limit1>[0-9.,]+)')
-limit2Matcher = re.compile(r'[Ll]imit\s*[2]?[:]?\s*(?P<limit1>[0-9.,]+)')
+limit1Matcher = re.compile(r'[Ll]imit\s*1?:\s*(?P<limit1>[0-9.,]+)')
+limit2Matcher = re.compile(r'[Ll]imit\s*2?:\s*(?P<limit1>[0-9.,]+)')
 
 def request_map_to_alert(request: TradingViewRequestBody) -> TradingViewAlert:
   now = getSettingCurrentTime()

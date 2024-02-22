@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from ib_insync import util
 
-from ..svc.auto_trade import place_order
+from ..svc.auto_trade import place_order, placeOrderFromAlert
 
 from ..util import getSettingCurrentTime, timing
 
@@ -46,13 +46,13 @@ def post_alert_hook(
   # place_order(body, ibkr)
   return "Ok"
 
-@router.post("/test-trade")
+@router.post("/sim-trade")
 @timing
-async def trade_from_alert(body: TradingViewRequestBody):
+def trade_from_alert(body: TradingViewRequestBody):
   logger.info(f"Alert received. Body: {body}")
   alert = request_map_to_alert(body)
-  await place_order(alert, ibkr)
-  return "Ok"
+  trade = placeOrderFromAlert(alert, ibkr)
+  return trade.orderStatus.status
 
 @router.get("/stats")
 def stats():

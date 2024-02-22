@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import asdict
 import logging
 import math
-from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder, Ticker, util
+from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder, Ticker, Trade, util
 
 from ..models.all import TradingViewAlert
 
@@ -10,6 +10,10 @@ symbolMapping = {
   "ES1!": ["ES", "FUT"]
 }
 logger = logging.getLogger(__name__)
+
+def placeOrderFromAlert(alert: TradingViewAlert, ibkr: IB) -> Trade:
+  contract = tv_to_ib(alert.ticker, ibkr)
+  return ibkr.placeOrder(contract, MarketOrder(action=str.upper(alert.action), totalQuantity=alert.quantity))
 
 async def place_order(alert: TradingViewAlert, ibkr: IB) -> None:
   # Extract info

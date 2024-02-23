@@ -8,7 +8,7 @@ from sqlmodel import Session
 from ib_insync import util
 
 from ..svc.auto_trade import place_order, placeOrderFromAlert
-
+from ..const import WHITE_LIST
 from ..util import getSettingCurrentTime, timing
 
 from ..svc.alert_trade import request_map_to_alert
@@ -35,15 +35,13 @@ def post_alert_hook(
   logger.info(f"Alert received. Body: {body}")
   try:
     alert = request_map_to_alert(body)
+    if alert.ticker in WHITE_LIST:
+      place_order(alert, ibkr)
   except Exception as e:
     alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=body.ticker, signal="error", action=body.orderAction, error=str(e), content=body.model_dump_json())
     traceback.print_exc()
   session.add(alert)
   session.commit()
-  # if body.ticker in BLACK_LIST:
-  #   return "blacklist"
-  
-  # place_order(body, ibkr)
   return "Ok"
 
 @router.post("/sim-trade")
@@ -51,9 +49,11 @@ def post_alert_hook(
 def trade_from_alert(request: TradingViewRequestBody):
   alert = request_map_to_alert(request)
   logger.info(f"Alert received. Request: {request}. Alert: {alert}")
-  trade = placeOrderFromAlert(alert, ibkr)
-  logger.info(f"Submit order: {trade}")
-  return trade.orderStatus.status
+  if alert.ticker in WHITE_LIST:
+    trade = placeOrderFromAlert(alert, ibkr)
+    logger.info(f"Submit order: {trade}")
+    return trade.orderStatus.status
+  return None
 
 @router.get("/stats")
 def stats():

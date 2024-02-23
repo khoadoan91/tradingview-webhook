@@ -1,0 +1,1 @@
+WHITE_LIST = set(['SPY', "TSLA"])

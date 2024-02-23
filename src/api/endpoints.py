@@ -48,10 +48,11 @@ def post_alert_hook(
 
 @router.post("/sim-trade")
 @timing
-def trade_from_alert(body: TradingViewRequestBody):
-  logger.info(f"Alert received. Body: {body}")
-  alert = request_map_to_alert(body)
+def trade_from_alert(request: TradingViewRequestBody):
+  alert = request_map_to_alert(request)
+  logger.info(f"Alert received. Request: {request}. Alert: {alert}")
   trade = placeOrderFromAlert(alert, ibkr)
+  logger.info(f"Submit order: {trade}")
   return trade.orderStatus.status
 
 @router.get("/stats")

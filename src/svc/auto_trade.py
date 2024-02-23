@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import asdict
 import logging
 import math
-from ib_insync import IB, Contract, Future, MarketOrder, Stock, StopLimitOrder, Ticker, Trade, util
+from ib_insync import IB, Contract, Crypto, Future, MarketOrder, Stock, StopLimitOrder, Ticker, Trade, util
 
 from ..models.all import TradingViewAlert
 
@@ -48,7 +48,9 @@ async def place_order(alert: TradingViewAlert, ibkr: IB) -> None:
       logger.info(f"Update stoploss of the limit2 order to entry price {order.auxPrice}")
 
 def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
-  if symbol in symbolMapping:
+  if "USD" in symbol:
+    contract = Crypto(symbol[:-3], "PAXOS", "USD")
+  elif symbol in symbolMapping:
     if symbolMapping[symbol][1] == "FUT":
       contract = Future(symbolMapping[symbol], currency="USD")
     else:

@@ -48,7 +48,7 @@ def post_alert_hook(
 @timing
 def trade_from_alert(request: TradingViewRequestBody):
   alert = request_map_to_alert(request)
-  logger.info(f"Alert received. Request: {request}. Alert: {alert}")
+  logger.info(f"Alert received. Request: {request}")
   if alert.ticker in WHITE_LIST:
     trade = placeOrderFromAlert(alert, ibkr)
     logger.info(f"Submit order: {trade}")

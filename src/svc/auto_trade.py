@@ -7,7 +7,9 @@ from ib_insync import IB, Contract, Crypto, Future, MarketOrder, Stock, StopLimi
 from ..models.all import TradingViewAlert
 
 symbolMapping = {
-  "ES1!": ["ES", "FUT"]
+  "ES1!": ["ES", "FUT"],
+  "MES1!": ["MES", "FUT"],
+  "MES1": ["MES", "FUT"]
 }
 logger = logging.getLogger(__name__)
 
@@ -52,12 +54,13 @@ def tv_to_ib(symbol: str, ibkr: IB) -> Contract:
     contract = Crypto(symbol[:-3], "PAXOS", "USD")
   elif symbol in symbolMapping:
     if symbolMapping[symbol][1] == "FUT":
-      contract = Future(symbolMapping[symbol], currency="USD")
+      contract = Future(symbolMapping[symbol], localSymbol=f"{symbolMapping[symbol]}H4", currency="USD", exchange="CME")
     else:
       contract = Stock(symbolMapping[symbol], "SMART", currency="USD")
   else:
     contract = Stock(symbol, "SMART", currency="USD")
-  return ibkr.reqContractDetails(contract)[0].contract
+  ibkr.qualifyContractsAsync(contract)
+  return contract
   
 async def calculate_order_size(ibkr: IB, symbol: Contract, allowFundPercent: float = 0.1) -> float:
   accountSummary = ibkr.accountSummaryAsync()

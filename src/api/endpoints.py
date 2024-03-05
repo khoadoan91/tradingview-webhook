@@ -1,20 +1,20 @@
 from dataclasses import asdict
 import logging
 import traceback
-from typing import Annotated, Generator
+from typing import Annotated, Any, Generator
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from sqlmodel import Session
 from ib_insync import util
 
-from ..svc.auto_trade import place_order, placeOrderFromAlert
-from ..const import WHITE_LIST
+from ..const import SYMBOL_MAPPING
 from ..util import getSettingCurrentTime, timing
 
-from ..svc.alert_trade import request_map_to_alert
+from ..svc.alert_trade import RequestMapper
+from ..svc.ibOrderOperation import IbOrderOperation
 
 from ..db.engine import engine
-from ..models.all import TradingViewAlert, TradingViewRequestBody
+from ..models.all import TradersPostRequestBody, TradingViewAlert, TradingViewRequestBody
 from ..dependencies import ibkr
 
 logger = logging.getLogger(__name__)
@@ -27,16 +27,16 @@ SessionDep = Annotated[Session, Depends(get_db)]
 
 @router.post("/alert-hook")
 @timing
-def post_alert_hook(
+async def post_alert_hook(
   *, session: SessionDep, body: TradingViewRequestBody):
   """
   Listen to tradingview alert to place orders.
   """
   logger.info(f"Alert received. Body: {body}")
   try:
-    alert = request_map_to_alert(body)
-    if alert.ticker in WHITE_LIST:
-      place_order(alert, ibkr)
+    alert = RequestMapper.requestMapToAlert(body)
+    if alert.ticker in SYMBOL_MAPPING:
+      await IbOrderOperation.placeLimitStopOrderAsync(ibkr, alert)
   except Exception as e:
     alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=body.ticker, signal="error", action=body.orderAction, error=str(e), content=body.model_dump_json())
     traceback.print_exc()
@@ -46,14 +46,19 @@ def post_alert_hook(
 
 @router.post("/sim-trade")
 @timing
-def trade_from_alert(request: TradingViewRequestBody):
-  alert = request_map_to_alert(request)
-  logger.info(f"Alert received. Request: {request}")
-  if alert.ticker in WHITE_LIST:
-    trade = placeOrderFromAlert(alert, ibkr)
-    logger.info(f"Submit order: {trade}")
-    return trade.orderStatus.status
-  return None
+async def tradeFromAlertAsync(*, session: SessionDep, payload: Any = Body(None)):
+  logger.info(f"Alert received. Request: {payload}")
+  requestBody = TradersPostRequestBody(**payload)
+  try:
+    alert = RequestMapper.requestMapToAlert(requestBody)
+    trade = await IbOrderOperation.placeMarketOrderFromAlertAsync(ibkr, alert)
+    logger.info(f"Trade info: {trade}")
+  except Exception as e:
+    alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=requestBody.ticker, signal="error", action=requestBody.orderAction, error=str(e), content=requestBody.model_dump_json())
+    traceback.print_exc()
+  session.add(alert)
+  session.commit()
+  return "ok"
 
 @router.get("/stats")
 def stats():
@@ -91,3 +96,9 @@ def trades():
       list[Trade]: A list of trades
   """
   return [asdict(trade) for trade in ibkr.trades()]
+
+@router.get("/balances")
+def balances():
+  """Get current balance"""
+  accounts = ibkr.accountSummary()
+  return accounts

@@ -1,0 +1,63 @@
+
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: scale-script
+#   namespace: tv
+# data:
+#   scale-up-ibkr-script.sh: |
+#     #!/bin/bash
+#     kubectl scale deploy ibkr-gateway -n tv --replicas=1
+#     kubectl scale deploy tradingview-webhook-app -n tv --replicas=1
+#   scale-down-ibkr-script.sh: |
+#     #!/bin/bash
+#     kubectl scale deploy tradingview-webhook-app -n tv --replicas=0
+#     kubectl scale deploy ibkr-gateway -n tv --replicas=0
+# ---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scale-up
+  namespace: tv
+spec:
+  schedule: "30 14 * * MON-FRI"
+  jobTemplate:
+    metadata:
+      name: scale-up
+    spec:
+      template:
+        spec:
+          containers:
+          - name: scale-up
+            image: bitnami/kubectl:latest
+            command: ["/bin/bash", "-c"]
+            args:
+            - |
+              kubectl scale deploy ibkr-gateway -n tv --replicas=1
+              sleep 5s
+              kubectl scale deploy tradingview-webhook-app -n tv --replicas=1
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scale-down
+  namespace: tv
+spec:
+  schedule: "30 22 * * MON-FRI"
+  jobTemplate:
+    metadata:
+      name: scale-down
+    spec:
+      template:
+        spec:
+          containers:
+          - name: scale-down
+            image: bitnami/kubectl:latest
+            command: ["/bin/bash", "-c"]
+            args:
+            - |
+              kubectl scale deploy tradingview-webhook-app -n tv --replicas=0
+              sleep 5s
+              kubectl scale deploy ibkr-gateway -n tv --replicas=0
+          restartPolicy: OnFailure

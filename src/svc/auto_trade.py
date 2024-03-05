@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import asdict
 import logging
 import math
-from ib_insync import IB, Contract, Crypto, Future, MarketOrder, Stock, StopLimitOrder, Ticker, Trade, util
+from ib_insync import *
 
 from ..models.all import TradingViewAlert
 
@@ -13,9 +13,15 @@ symbolMapping = {
 }
 logger = logging.getLogger(__name__)
 
-def placeOrderFromAlert(alert: TradingViewAlert, ibkr: IB) -> Trade:
+async def placeOrderFromAlert(alert: TradingViewAlert, ibkr: IB) -> Trade:
+  action = str.upper(alert.action)
   contract = tv_to_ib(alert.ticker, ibkr)
-  return ibkr.placeOrder(contract, MarketOrder(action=str.upper(alert.action), totalQuantity=alert.quantity))
+  orderSnapshot = await reqMktOrderSnapshot(ibkr, contract)
+  lmtPrice = orderSnapshot.ask if action == "BUY" else orderSnapshot.bid
+  limitOrder = LimitOrder(action, alert.quantity, lmtPrice, tif="IOC")
+  order = ibkr.placeOrder(contract, limitOrder)
+  ibkr.waitOnUpdate()
+  return order
 
 async def place_order(alert: TradingViewAlert, ibkr: IB) -> None:
   # Extract info

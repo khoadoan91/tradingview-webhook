@@ -7,9 +7,11 @@ class TradingViewAlert(SQLModel, table=True):
   __tablename__ = "tradingview_alert"
   
   id: Optional[int] = Field(default=None, primary_key=True)
+  fired_at: Optional[datetime] = None
   received_at: datetime = Field(default=datetime.now())
   ticker: str
   signal: Optional[str] = None
+  sentiment: Optional[str] = None
   action: str
   quantity: Optional[int] = None
   limit1: Optional[float] = None
@@ -24,3 +26,10 @@ class TradingViewRequestBody(BaseModel):
   ticker: str
   positionSize: str
   orderComment: str
+  
+class TradersPostRequestBody(BaseModel):
+  ticker: str
+  action: str
+  sentiment: str
+  quantity: int
+  time: datetime

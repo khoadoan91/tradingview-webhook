@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import asdict
 import logging
 import traceback
@@ -46,12 +47,12 @@ async def post_alert_hook(
 
 @router.post("/sim-trade")
 @timing
-async def tradeFromAlertAsync(*, session: SessionDep, payload: Any = Body(None)):
+def tradeFromAlertAsync(*, session: SessionDep, payload: Any = Body(None)):
   logger.info(f"Alert received. Request: {payload}")
   requestBody = TradersPostRequestBody(**payload)
   try:
     alert = RequestMapper.requestMapToAlert(requestBody)
-    trade = await IbOrderOperation.placeMarketOrderFromAlertAsync(ibkr, alert)
+    trade = asyncio.run(IbOrderOperation.placeMarketOrderFromAlertAsync(ibkr, alert))
     logger.info(f"Trade info: {trade}")
   except Exception as e:
     alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=requestBody.ticker, signal="error", action=requestBody.orderAction, error=str(e), content=requestBody.model_dump_json())

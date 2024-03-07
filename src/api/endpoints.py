@@ -55,7 +55,7 @@ def tradeFromAlertAsync(*, session: SessionDep, payload: Any = Body(None)):
     trade = asyncio.run(IbOrderOperation.placeMarketOrderFromAlertAsync(ibkr, alert))
     logger.info(f"Trade info: {trade}")
   except Exception as e:
-    alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=requestBody.ticker, signal="error", action=requestBody.orderAction, error=str(e), content=requestBody.model_dump_json())
+    alert = TradingViewAlert(received_at=getSettingCurrentTime(), ticker=requestBody.ticker, signal="error", action=requestBody.action, error=str(e), content=requestBody.model_dump_json())
     traceback.print_exc()
   session.add(alert)
   session.commit()

@@ -17,7 +17,7 @@ class IbOrderOperation:
     Place order based on entry and exit
     """
     action = str.upper(alert.action)
-    contract = await IbOrderOperation.getIbContractAsync(alert.ticker)
+    contract = await IbOrderOperation.getIbContractAsync(ib, alert.ticker)
     orderSnapshot = await IbOrderOperation.reqMktOrderSnapshotAsync(ib, contract)
     lmtPrice = orderSnapshot.ask if action == "BUY" else orderSnapshot.bid
     limitOrder = LimitOrder(action, alert.quantity, lmtPrice, tif="IOC")
@@ -27,7 +27,7 @@ class IbOrderOperation:
   
   @staticmethod
   async def placeMarketOrderFromAlertAsync(ib: IB, alert: TradingViewAlert) -> Trade:
-    contract = await IbOrderOperation.getIbContractAsync(alert.ticker)
+    contract = await IbOrderOperation.getIbContractAsync(ib, alert.ticker)
     order = ib.placeOrder(contract, MarketOrder(str.upper(alert.action), alert.quantity))
     ib.waitOnUpdate()
     return order

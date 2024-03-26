@@ -32,4 +32,5 @@ class TradersPostRequestBody(BaseModel):
   action: str
   sentiment: str
   quantity: int
+  price: float
   time: datetime

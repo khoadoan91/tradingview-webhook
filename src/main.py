@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from .dependencies import settings, ibkr
 from .api import endpoints
 import nest_asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 # from ..blacklist import BLACK_LIST
 # from ..svc.auto_trade import place_order
@@ -45,6 +46,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="tradingview-webhook"
               , lifespan=lifespan
               )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://www.tradingview.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(endpoints.router)
 
